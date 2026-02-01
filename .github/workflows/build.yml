@@ -1,0 +1,39 @@
+name: Build WebSSH for Alwaysdata
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+          cd ..
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build Backend (Go)
+        run: |
+          # GOOS=linux GOARCH=amd64 确保编译出的文件能在 Alwaysdata 的 Linux 环境运行
+          GOOS=linux GOARCH=amd64 go build -o webssh_app main.go
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: webssh-package
+          # 我们只需要这个二进制文件，因为它已经包含了前端
+          path: webssh_app
